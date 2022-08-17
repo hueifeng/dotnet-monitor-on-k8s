@@ -1,0 +1,39 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-config
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval:     15s 
+      evaluation_interval: 15s
+    scrape_configs:
+      - job_name: 'prometheus'
+        static_configs:
+        - targets: ['localhost:9090']
+      - job_name: default/dotnet-monitor-example/0
+        honor_timestamps: true
+        scrape_interval: 2s
+        scrape_timeout: 2s
+        metrics_path: /metrics
+        scheme: http
+        follow_redirects: true
+        relabel_configs:
+        - source_labels: [__meta_kubernetes_pod_container_name]
+          separator: ;
+          regex: sidecar
+          replacement: $1
+          action: keep    
+        - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+          action: keep
+          regex: true
+      # Add the kubernetes pod name.
+        - source_labels: [__meta_kubernetes_pod_name]
+          action: replace
+          target_label: pod
+        kubernetes_sd_configs:
+        - role: endpoints
+          follow_redirects: true
+          namespaces:
+            names:
+            - default

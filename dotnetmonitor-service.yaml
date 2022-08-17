@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: dotnetmonitor
+  labels:
+    app: dotnetmonitor
+spec:
+  type: NodePort
+  ports:
+    - name: sidecar
+      protocol: TCP
+      port: 52323
+      nodePort: 31623
+    - name: app
+      protocol: TCP
+      port: 80
+      nodePort: 31624
+  selector:
+    app: dotnet-monitor-example

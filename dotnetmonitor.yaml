@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dotnet-monitor-example
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: dotnet-monitor-example
+  template:
+    metadata:
+      annotations:
+        prometheus.io/scrape: 'true'
+        prometheus.io/port: "52325"
+      labels:
+        app: dotnet-monitor-example
+    spec:
+      containers:
+        - name: server
+          image: mcr.microsoft.com/dotnet/core/samples:aspnetapp
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - mountPath: /tmp
+              name: tmp
+        - name: sidecar
+          image: mcr.microsoft.com/dotnet/monitor
+          ports:
+            - containerPort: 52323
+          resources:
+            requests:
+              cpu: 50m
+              memory: 32Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
+          args: ["--no-auth"]
+          env:
+            - name: DOTNETMONITOR_Urls
+              value: "http://+:52323"
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}
